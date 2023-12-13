@@ -30,7 +30,6 @@ module Routes
       shopify_response.to_json
     end
     get '/images' do
-        # Nova rota com a consulta GraphQL para imagens
         query = <<~GRAPHQL
           {
             products(first: 10) {
@@ -54,5 +53,25 @@ module Routes
         content_type :json
         shopify_response.to_json
       end
+    get '/collections' do
+      query = <<~GRAPHQL
+      {
+        collections(first: 10) {
+          nodes {
+            handle
+            id
+            image {
+              src
+              id
+            }
+          }
+        }
+      }
+      GRAPHQL
+
+      shopify_response = make_shopify_request(query)
+        content_type :json
+        shopify_response.to_json
+    end
   end
 end
