@@ -1,7 +1,7 @@
 require 'sinatra'
 require 'shopify_api'
 require 'sinatra/cors'
-
+require 'mini_magick'
 module Routes
   class Product < Sinatra::Base
     register Sinatra::Cors
@@ -21,6 +21,33 @@ module Routes
               'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
               'Access-Control-Allow-Headers' => 'Origin, Accept, Content-Type, X-Requested-With, X-CSRF-Token'
     end
+    put '/product/:id' do
+      request_body = JSON.parse(request.body.read)
+      product_id = params['id'].to_i
+
+      product = ShopifyAPI::Product.new(session: test_session)
+      product.id = product_id
+      product.metafields = [
+        {
+          "key" => request_body['key'],
+          "value" => request_body['new_value'],
+          "type" => request_body['type'],
+          "namespace" => request_body['namespace']
+        }
+        ]
+        if product.save
+          content_type :json
+          status 201
+          product.metafields.to_json
+        else
+          status 500
+          { status: 'error', message: 'Failed to update product', errors: product.errors.full_messages }.to_json
+        end
+
+        content_type :json
+        product_data.to_json
+    end
+
     get '/product/:id' do
       product_id = params['id'].to_i
 
@@ -51,28 +78,55 @@ module Routes
         content_type :json
         product_data.to_json
       else
-        # Se o produto não for encontrado, retornar um erro em JSON
         status 404
         { status: 'error', message: 'Product not found' }.to_json
       end
     end
 
-    post '/createProduct' do
+    post '/create_product' do
       request_body = JSON.parse(request.body.read)
-      product = ShopifyAPI::Product.new(session: session)
 
-      product.title = request_body[:title]
-      product.body_html = request_body[:body_html]
-      product.product_type = [:product_type]
-      product.status = "active"
-      product.save!
-      if product.save
+      product = ShopifyAPI::Product.new(session: session)
+      product.title = request_body['title']
+      product.body_html = request_body['body_html']
+      product.product_type = request_body['product_type']
+      product.status = request_body['status']
+
+
+      if product.save!
+
+        if request_body['variants'] && request_body['variants'].is_a?(Array)
+          request_body['variants'].each do |variant_data|
+            variant = ShopifyAPI::Variant.new(session: session)
+            variant.product_id = product.id
+            variant.option1 = variant_data['title']
+            variant.price = variant_data['price']
+            variant.inventory_quantity = variant_data['inventory_quantity']
+            variant.save!
+          end
+        end
+
+        if request_body['images'] && request_body['images'].is_a?(Array)
+          request_body['images'].each do |image_data|
+            image = ShopifyAPI::Image.new(session: session)
+            image.product_id = product.id
+            image.attachment = image_data['src']
+            image.save!
+          end
+        end
+
         content_type :json
         status 201
-        product.to_json
+        { status: 'success', message: 'Product created successfully' }.to_json
+      else
+        status 500
+        { status: 'error', message: 'Failed to create product', errors: product.errors.full_messages }.to_json
       end
-
     end
+
+
+
+
 
     get '/products' do
 
