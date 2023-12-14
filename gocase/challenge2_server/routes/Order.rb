@@ -6,29 +6,29 @@ module Routes
     include ShopifyAPIHelper
     register Sinatra::Cors
 
-    set :allow_origin, "*"
-    set :allow_methods, "GET,HEAD,POST,UPDATE,DELETE"
-    set :allow_headers, "content-type,if-modified-since"
-    set :expose_headers, "location,link"
+    set :allow_origin, '*'
+    set :allow_methods, 'GET,HEAD,POST,UPDATE,DELETE'
+    set :allow_headers, 'content-type,if-modified-since'
+    set :expose_headers, 'location,link'
 
 
 
     get '/order' do
       id = params[:id]
       query = <<~QUERY
-      query {
-        node(id: "gid://shopify/Order/148977776") {
-          id
-          ... on Order {
-            name
+        query {
+          node(id: "gid://shopify/Order/148977776") {
+            id
+            ... on Order {
+              name
+            }
           }
         }
-      }
-    QUERY
+      QUERY
     end
     get '/orders' do
-        limit = params[:limit] || 10
-        query = <<~QUERY
+      limit = params[:limit] || 10
+      query = <<~QUERY
         query {
           orders(first: 10) {
             edges {
@@ -43,30 +43,30 @@ module Routes
       QUERY
 
       shopify_response = make_shopify_request(query)
-        content_type :json
-        shopify_response.to_json
+      content_type :json
+      shopify_response.to_json
     end
 
     delete '/order' do
       id = params[:id]
       query = <<~QUERY
-      mutation draftOrderDelete($input: DraftOrderDeleteInput!) {
-        draftOrderDelete(input: $input) {
-          deletedId
+        mutation draftOrderDelete($input: DraftOrderDeleteInput!) {
+          draftOrderDelete(input: $input) {
+            deletedId
+          }
+        }
+      QUERY
+      variables = {
+        "input": {
+          "id": id
         }
       }
-    QUERY
-    variables = {
-      "input": {
-        "id": id
-      }
-    }
-    shopify_response = make_shopify_request(query,variables)
-        content_type :json
-        shopify_response.to_json
+      shopify_response = make_shopify_request(query, variables)
+      content_type :json
+      shopify_response.to_json
     end
 
-    put  '/order' do
+    put '/order' do
       request_body = JSON.parse(request.body.read)
       namespace = request_body['namespace']
       key = request_body['key']
@@ -82,45 +82,49 @@ module Routes
       address1 = request_body['address1']
 
       metafields = [
-    {"namespace" => namespace, "key" => key, "type" => "single_line_text_field", "value" => value_metafield},
-    {"id" => id_metafield, "value" => price}
-  ].reject { |metafield| metafield.values.any? { |v| v.nil? || v.strip.empty? } }
-  shippingAddress = [{"firstName" => firstName, "lastName" => lastName, "city" => city, "address1" => address1}
-].reject { |shippingAddress| shippingAddress.values.any? { |v| v.nil? || v.strip.empty? } }
+        { 'namespace' => namespace, 'key' => key, 'type' => 'single_line_text_field', 'value' => value_metafield },
+        { 'id' => id_metafield, 'value' => price }
+      ].reject { |metafield| metafield.values.any? { |v| v.nil? || v.strip.empty? } }
+      shippingAddress = [{ 'firstName' => firstName, 'lastName' => lastName, 'city' => city,
+                           'address1' => address1 }].reject do |shippingAddress|
+        shippingAddress.values.any? do |v|
+          v.nil? || v.strip.empty?
+        end
+      end
 
       query = <<~QUERY
-      mutation updateOrderMetafields($input: OrderInput!) {
-        orderUpdate(input: $input) {
-          order {
-            id
-            metafields(first: 3) {
-              edges {
-                node {
-                  id
-                  namespace
-                  key
-                  value
+        mutation updateOrderMetafields($input: OrderInput!) {
+          orderUpdate(input: $input) {
+            order {
+              id
+              metafields(first: 3) {
+                edges {
+                  node {
+                    id
+                    namespace
+                    key
+                    value
+                  }
                 }
               }
             }
-          }
-          userErrors {
-            message
-            field
+            userErrors {
+              message
+              field
+            }
           }
         }
+      QUERY
+      variables = {
+        'input' => {
+          'metafields' => metafields,
+          'shippingAddress' => shippingAddress,
+          'id' => id_order
+        }
       }
-    QUERY
-    variables = {
-      "input" => {
-        "metafields" => metafields,
-        "shippingAddress" => shippingAddress,
-        "id" => id_order
-      }
-    }
-    shopify_response = make_shopify_request(query,variables)
-        content_type :json
-        shopify_response.to_json
+      shopify_response = make_shopify_request(query, variables)
+      content_type :json
+      shopify_response.to_json
     end
   end
 end
