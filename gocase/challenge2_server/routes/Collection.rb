@@ -24,13 +24,25 @@ module Routes
 
     get '/collections' do
       collection = ShopifyAPI::CustomCollection.all(
-        session: session,
+        session: session
       )
       response_data = {}
       response_data['collection'] = extract_collection_data(collection)
       content_type :json
       status 200
-      { status: 'success', message: 'Product updated successfully',collections: response_data }.to_json
+      { status: 'success', message: 'Collection query sucessfully', collections: response_data }.to_json
+    end
+    post '/collection' do
+      request_body = JSON.parse(request.body.read)
+      collection = ShopifyAPI::CustomCollection.new(session: session)
+      collection.title = request_body['title']
+      collection.image = request_body['image']
+      collection.save!
+      response_data = {}
+      response_data['collection'] = extract_collection_data(collection)
+      content_type :json
+      status 200
+      { status: 'success', message: 'Collection created successfully', collection: response_data }.to_json
     end
   end
 end

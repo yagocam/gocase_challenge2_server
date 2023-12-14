@@ -5,6 +5,7 @@ require_relative 'routes/product'
 require_relative 'routes/collection'
 require_relative 'routes/order'
 require_relative 'routes/customer'
+require_relative 'routes/collect'
 
 class MyApp < Sinatra::Base
   register Sinatra::Cors
@@ -32,6 +33,7 @@ class MyApp < Sinatra::Base
   use Routes::Collection
   use Routes::Order
   use Routes::Customer
+  use Routes::Collect
 
   configure do
     set :server, :puma

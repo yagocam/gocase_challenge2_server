@@ -1,10 +1,13 @@
 def extract_single_collection_data(collection)
   data = {
-    id: collection.id,
-    title: collection.title,
-    body_html: collection.body_html,
+    collection: {
+      id: collection.id,
+      title: collection.title,
+    }
   }
-  data[:src] = collection.image['src'] if collection.image.is_a?(Hash)
+  if collection.image.is_a?(Hash)
+    data[:collection][:src] = collection.image['src']
+  end
   data
 end
 

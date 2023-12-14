@@ -110,7 +110,7 @@ GEM
     irb (1.10.1)
       rdoc
       reline (>= 0.3.8)
-    json (2.7.1)
+    json (2.5.1)
     jwt (2.7.1)
     language_server-protocol (3.17.0.3)
     loofah (2.22.0)
@@ -278,6 +278,8 @@ PLATFORMS
 DEPENDENCIES
   certified
   httparty
+  json
+  openssl
   puma
   rubocop (~> 1.59)
   shopify_api (~> 13.3)

@@ -1,6 +1,7 @@
 require 'sinatra'
 require 'shopify_api'
 require 'sinatra/cors'
+require_relative 'utils/utils_products'
 module Routes
   class Product < Sinatra::Base
     register Sinatra::Cors
@@ -20,35 +21,7 @@ module Routes
               'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
               'Access-Control-Allow-Headers' => 'Origin, Accept, Content-Type, X-Requested-With, X-CSRF-Token'
     end
-    def extract_product_data(product)
-      {
-        id: product.id,
-        title: product.title,
-        body_html: product.body_html,
-        product_type: product.product_type,
-        status: product.status,
-        images: extract_images_data(product.images)
-      }
-    end
-    def extract_images_data(images)
-      images.map do |image|
-        {
-          id: image.id,
-          src: image.src
-        }
-      end
-    end
 
-    def extract_variant_data(variant)
-      {
-        id: variant.id,
-        product_id:variant.product.id,
-        option1: variant.option1,
-        image_id: variant.image_id,
-        price: variant.price,
-        inventory_quantity: variant.inventory_quantity
-      }
-    end
     put '/product/:id' do
       request_body = JSON.parse(request.body.read)
       product_id = params['id'].to_i
@@ -56,22 +29,22 @@ module Routes
       product = ShopifyAPI::Product.new(session: session)
       product.id = product_id
       product.title = request_body['title']
-      product.body_html = request_body['body_html']if request_body['body_html']
+      product.body_html = request_body['body_html'] if request_body['body_html']
       product.status = request_body['status'] if request_body['status']
       if request_body['images'].is_a?(Array)
         product.images = request_body['images']
       elsif request_body['clear_images']
         product.images = []
       end
-        if product.save!
-          response_data['product'] = extract_product_data(product)
-          content_type :json
-          status 201
-          { status: 'success', message: 'Product updated successfully',product: response_data }.to_json
-        else
-          status 500
-          { status: 'error', message: 'Failed to update product', errors: product.errors.full_messages }.to_json
-        end
+      if product.save!
+        response_data['product'] = extract_product_data(product)
+        content_type :json
+        status 201
+        { status: 'success', message: 'Product updated successfully', product: response_data }.to_json
+      else
+        status 500
+        { status: 'error', message: 'Failed to update product', errors: product.errors.full_messages }.to_json
+      end
     end
 
     get '/product/:id' do
@@ -135,19 +108,13 @@ module Routes
         response_data['variants'] << extract_variant_data(variant)
         content_type :json
         status 201
-        { status: 'success', message: 'Product created successfully',product: response_data }.to_json
+        { status: 'success', message: 'Product created successfully', product: response_data }.to_json
       else
         status 500
         { status: 'error', message: 'Failed to create product', errors: product.errors.full_messages }.to_json
       end
     end
-
-
-
-
-
     get '/products' do
-
       products = ShopifyAPI::Product.all(
         session: session
       )
@@ -155,30 +122,30 @@ module Routes
 
       products_data = []
 
-products.each do |product|
-  product_data = {
-    title: product.title,
-    id: product.id,
-    body_html: product.body_html,
-    createdAt: product.created_at,
-    status: product.status,
-    active: product.published_at, # Verifica se há uma data de publicação
-    variants: []
-  }
+      products.each do |product|
+        product_data = {
+          title: product.title,
+          id: product.id,
+          body_html: product.body_html,
+          createdAt: product.created_at,
+          status: product.status,
+          active: product.published_at, # Verifica se há uma data de publicação
+          variants: []
+        }
 
-  product.variants.each do |variant|
-    product_data[:variants] << {
-      id: variant.id,
-      product_id: variant.product_id,
-      title: variant.title,
-      price: variant.price
-    }
-  end
+        product.variants.each do |variant|
+          product_data[:variants] << {
+            id: variant.id,
+            product_id: variant.product_id,
+            title: variant.title,
+            price: variant.price
+          }
+        end
 
-  products_data << product_data
-end
+        products_data << product_data
+      end
 
-products_data.to_json
+      products_data.to_json
     end
   end
 end

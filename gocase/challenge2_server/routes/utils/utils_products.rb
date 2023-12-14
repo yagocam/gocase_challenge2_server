@@ -8,6 +8,7 @@ def extract_product_data(product)
     images: extract_images_data(product.images)
   }
 end
+
 def extract_images_data(images)
   images.map do |image|
     {
@@ -20,7 +21,7 @@ end
 def extract_variant_data(variant)
   {
     id: variant.id,
-    product_id:variant.product.id,
+    product_id: variant.product.id,
     option1: variant.option1,
     image_id: variant.image_id,
     price: variant.price,
