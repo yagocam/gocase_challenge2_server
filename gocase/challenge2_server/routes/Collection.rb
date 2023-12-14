@@ -4,12 +4,14 @@ require_relative '../helpers/shopify_api_helper'
 module Routes
   class Collection < Sinatra::Base
     include ShopifyAPIHelper
+    register Sinatra::Cors
 
-    before do
-      headers 'Access-Control-Allow-Origin' => 'http://192.168.0.5:3000',
-              'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
-              'Access-Control-Allow-Headers' => 'Origin, Accept, Content-Type, X-Requested-With, X-CSRF-Token'
-    end
+    set :allow_origin, "*"
+    set :allow_methods, "GET,HEAD,POST"
+    set :allow_headers, "content-type,if-modified-since"
+    set :expose_headers, "location,link"
+
+  
 
     get '/collections' do
         limit = params[:limit] || 10

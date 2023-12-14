@@ -11,12 +11,12 @@ class MyApp < Sinatra::Base
   end
 
   before do
-    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
-    response.headers['Access-Control-Allow-Headers'] = 'if-modified-since,content-type,authorization'
-    response.headers['Access-Control-Expose-Headers'] = 'location,link'
+    set :allow_origin, '*' # Permitir solicitações de qualquer origem
+    set :allow_methods, "GET,HEAD,POST"
+    set :allow_headers, "content-type,if-modified-since"
+    set :expose_headers, "location,link"
   end
 
-  set :allow_origin, '*' # Permitir solicitações de qualquer origem
 
   use Routes::Product
   use Routes::Collection
