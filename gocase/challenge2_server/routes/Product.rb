@@ -25,27 +25,24 @@ module Routes
       request_body = JSON.parse(request.body.read)
       product_id = params['id'].to_i
 
-      product = ShopifyAPI::Product.new(session: test_session)
+      product = ShopifyAPI::Product.new(session: session)
       product.id = product_id
-      product.metafields = [
-        {
-          "key" => request_body['key'],
-          "value" => request_body['new_value'],
-          "type" => request_body['type'],
-          "namespace" => request_body['namespace']
-        }
-        ]
-        if product.save
+      product.title = request_body['title']
+      product.status = request_body['status'] if request_body['status']
+      if request_body['images'].is_a?(Array)
+        product.images = request_body['images']
+      elsif request_body['clear_images']
+        product.images = []
+      end
+        if product.save!
           content_type :json
           status 201
-          product.metafields.to_json
         else
           status 500
           { status: 'error', message: 'Failed to update product', errors: product.errors.full_messages }.to_json
         end
 
         content_type :json
-        product_data.to_json
     end
 
     get '/product/:id' do
@@ -91,25 +88,14 @@ module Routes
       product.body_html = request_body['body_html']
       product.product_type = request_body['product_type']
       product.status = request_body['status']
-      product.images = request_body['images']
-      # if request_body['images'] && request_body['images'].is_a?(Array)
-      #   request_body['images'].each do |image_data|
-      #     image = ShopifyAPI::Image.new(session: session)
-      #     image.product_id = product.id
-      #     image.attachment = image_data['src']
-      #     image.filename = "imagem_legal.jpg"
-      #     image.save!
-      #   end
+      product.images = request_body['images'] if request_body['images']
 
       if product.save!
-
         if request_body['variants'] && request_body['variants'].is_a?(Array)
           request_body['variants'].each_with_index do |variant_data, index|
             variant = ShopifyAPI::Variant.new(session: session)
             variant.product_id = product.id
             variant.option1 = variant_data['title']
-            # Obter o image_id correspondente ao índice da variante
-            puts product.images[index].id
             variant.image_id = product.images[index].id if product.images[index].id
             variant.price = variant_data['price']
             variant.inventory_quantity = variant_data['inventory_quantity']
@@ -119,7 +105,7 @@ module Routes
 
         content_type :json
         status 201
-        { status: 'success', message: 'Product created successfully' }.to_json
+        { status: 'success', message: 'Product created successfully',product: product.id }.to_json
       else
         status 500
         { status: 'error', message: 'Failed to create product', errors: product.errors.full_messages }.to_json
