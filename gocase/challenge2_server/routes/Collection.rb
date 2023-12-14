@@ -1,38 +1,36 @@
 require 'sinatra'
-require_relative '../helpers/shopify_api_helper'
+require 'shopify_api'
+require 'sinatra/cors'
+require_relative 'utils/utils_collection'
 
 module Routes
   class Collection < Sinatra::Base
-    include ShopifyAPIHelper
     register Sinatra::Cors
 
+    session = ShopifyAPI::Auth::Session.new(
+      shop: 'businesscasegocasedev.myshopify.com',
+      access_token: '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'
+    )
     set :allow_origin, '*'
     set :allow_methods, 'GET,HEAD,POST,UPDATE,'
     set :allow_headers, 'content-type,if-modified-since'
     set :expose_headers, 'location,link'
 
-
+    before do
+      headers 'Access-Control-Allow-Origin' => '*',
+              'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
+              'Access-Control-Allow-Headers' => 'Origin, Accept, Content-Type, X-Requested-With, X-CSRF-Token'
+    end
 
     get '/collections' do
-      limit = params[:limit] || 10
-      query = <<~GRAPHQL
-        {
-          collections(first:#{limit}) {
-            nodes {
-              handle
-              id
-              image {
-                src
-                id
-              }
-            }
-          }
-        }
-      GRAPHQL
-
-      shopify_response = make_shopify_request(query)
+      collection = ShopifyAPI::CustomCollection.all(
+        session: session,
+      )
+      response_data = {}
+      response_data['collection'] = extract_collection_data(collection)
       content_type :json
-      shopify_response.to_json
+      status 200
+      { status: 'success', message: 'Product updated successfully',collections: response_data }.to_json
     end
   end
 end

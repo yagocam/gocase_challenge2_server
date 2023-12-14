@@ -1,7 +1,6 @@
 require 'sinatra'
 require 'shopify_api'
 require 'sinatra/cors'
-require 'mini_magick'
 module Routes
   class Product < Sinatra::Base
     register Sinatra::Cors
