@@ -91,27 +91,29 @@ module Routes
       product.body_html = request_body['body_html']
       product.product_type = request_body['product_type']
       product.status = request_body['status']
-
+      product.images = request_body['images']
+      # if request_body['images'] && request_body['images'].is_a?(Array)
+      #   request_body['images'].each do |image_data|
+      #     image = ShopifyAPI::Image.new(session: session)
+      #     image.product_id = product.id
+      #     image.attachment = image_data['src']
+      #     image.filename = "imagem_legal.jpg"
+      #     image.save!
+      #   end
 
       if product.save!
 
         if request_body['variants'] && request_body['variants'].is_a?(Array)
-          request_body['variants'].each do |variant_data|
+          request_body['variants'].each_with_index do |variant_data, index|
             variant = ShopifyAPI::Variant.new(session: session)
             variant.product_id = product.id
             variant.option1 = variant_data['title']
+            # Obter o image_id correspondente ao índice da variante
+            puts product.images[index].id
+            variant.image_id = product.images[index].id if product.images[index].id
             variant.price = variant_data['price']
             variant.inventory_quantity = variant_data['inventory_quantity']
             variant.save!
-          end
-        end
-
-        if request_body['images'] && request_body['images'].is_a?(Array)
-          request_body['images'].each do |image_data|
-            image = ShopifyAPI::Image.new(session: session)
-            image.product_id = product.id
-            image.attachment = image_data['src']
-            image.save!
           end
         end
 
