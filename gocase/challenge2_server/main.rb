@@ -20,6 +20,7 @@ class MyApp < Sinatra::Base
 
   use Routes::Product
   use Routes::Collection
+  use Routes::
 
   configure do
     set :server, :puma
