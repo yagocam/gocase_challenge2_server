@@ -2,6 +2,7 @@ require 'sinatra'
 require 'sinatra/cors'
 require_relative 'routes/product'
 require_relative 'routes/collection'
+require_relative 'routes/order'
 
 class MyApp < Sinatra::Base
   register Sinatra::Cors
@@ -12,7 +13,7 @@ class MyApp < Sinatra::Base
 
   before do
     set :allow_origin, '*' # Permitir solicitações de qualquer origem
-    set :allow_methods, "GET,HEAD,POST"
+    set :allow_methods, "GET,HEAD,POST,UPDATE,DELETE"
     set :allow_headers, "content-type,if-modified-since"
     set :expose_headers, "location,link"
   end
@@ -20,7 +21,7 @@ class MyApp < Sinatra::Base
 
   use Routes::Product
   use Routes::Collection
-  use Routes::
+  use Routes::Order
 
   configure do
     set :server, :puma

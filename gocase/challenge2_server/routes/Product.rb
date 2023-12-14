@@ -7,7 +7,7 @@ module Routes
     register Sinatra::Cors
 
     set :allow_origin, "*"
-    set :allow_methods, "GET,HEAD,POST"
+    set :allow_methods, "GET,HEAD,POST,UPDATE,DELETE"
     set :allow_headers, "content-type,if-modified-since"
     set :expose_headers, "location,link"
 
@@ -70,7 +70,7 @@ QUERY
       content_type :json
       shopify_response.to_json
       end
-      update '/product' do
+      put  '/product' do
         query = <<~QUERY
         mutation UpdateProductWithNewMedia($input: ProductInput!, $media: [CreateMediaInput!]) {
           productUpdate(input: $input, media: $media) {
