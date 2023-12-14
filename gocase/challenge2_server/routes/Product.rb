@@ -159,6 +159,7 @@ products.each do |product|
   product_data = {
     title: product.title,
     id: product.id,
+    body_html: product.body_html,
     createdAt: product.created_at,
     status: product.status,
     active: product.published_at, # Verifica se há uma data de publicação
