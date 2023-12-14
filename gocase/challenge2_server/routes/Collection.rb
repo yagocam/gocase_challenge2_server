@@ -7,7 +7,7 @@ module Routes
     register Sinatra::Cors
 
     set :allow_origin, "*"
-    set :allow_methods, "GET,HEAD,POST,UPDATE,DELETE"
+    set :allow_methods, "GET,HEAD,POST,UPDATE,"
     set :allow_headers, "content-type,if-modified-since"
     set :expose_headers, "location,link"
 

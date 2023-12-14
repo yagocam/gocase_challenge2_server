@@ -22,6 +22,7 @@ class MyApp < Sinatra::Base
   use Routes::Product
   use Routes::Collection
   use Routes::Order
+  use Routes::Costumer
 
   configure do
     set :server, :puma

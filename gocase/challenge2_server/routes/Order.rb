@@ -13,6 +13,19 @@ module Routes
 
 
 
+    get '/order' do
+      id = params[:id]
+      query = <<~QUERY
+      query {
+        node(id: "gid://shopify/Order/148977776") {
+          id
+          ... on Order {
+            name
+          }
+        }
+      }
+    QUERY
+    end
     get '/orders' do
         limit = params[:limit] || 10
         query = <<~QUERY
@@ -48,6 +61,9 @@ module Routes
         "id": id
       }
     }
+    shopify_response = make_shopify_request(query,variables)
+        content_type :json
+        shopify_response.to_json
     end
 
     put  '/order' do
@@ -102,6 +118,9 @@ module Routes
         "id" => id_order
       }
     }
+    shopify_response = make_shopify_request(query,variables)
+        content_type :json
+        shopify_response.to_json
     end
   end
 end
