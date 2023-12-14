@@ -21,13 +21,43 @@ module Routes
               'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
               'Access-Control-Allow-Headers' => 'Origin, Accept, Content-Type, X-Requested-With, X-CSRF-Token'
     end
+    def extract_product_data(product)
+      {
+        id: product.id,
+        title: product.title,
+        body_html: product.body_html,
+        product_type: product.product_type,
+        status: product.status,
+        images: extract_images_data(product.images)
+      }
+    end
+    def extract_images_data(images)
+      images.map do |image|
+        {
+          id: image.id,
+          src: image.src
+        }
+      end
+    end
+
+    def extract_variant_data(variant)
+      {
+        id: variant.id,
+        product_id:variant.product.id,
+        option1: variant.option1,
+        image_id: variant.image_id,
+        price: variant.price,
+        inventory_quantity: variant.inventory_quantity
+      }
+    end
     put '/product/:id' do
       request_body = JSON.parse(request.body.read)
       product_id = params['id'].to_i
-
+      response_data = {}
       product = ShopifyAPI::Product.new(session: session)
       product.id = product_id
       product.title = request_body['title']
+      product.body_html = request_body['body_html']if request_body['body_html']
       product.status = request_body['status'] if request_body['status']
       if request_body['images'].is_a?(Array)
         product.images = request_body['images']
@@ -35,14 +65,14 @@ module Routes
         product.images = []
       end
         if product.save!
+          response_data['product'] = extract_product_data(product)
           content_type :json
           status 201
+          { status: 'success', message: 'Product updated successfully',product: response_data }.to_json
         else
           status 500
           { status: 'error', message: 'Failed to update product', errors: product.errors.full_messages }.to_json
         end
-
-        content_type :json
     end
 
     get '/product/:id' do
@@ -62,7 +92,6 @@ module Routes
           published_at: product.published_at,
           variants: []
         }
-
         product.variants.each do |variant|
           product_data[:variants] << {
             id: variant.id,
@@ -82,7 +111,7 @@ module Routes
 
     post '/create_product' do
       request_body = JSON.parse(request.body.read)
-
+      response_data = {}
       product = ShopifyAPI::Product.new(session: session)
       product.title = request_body['title']
       product.body_html = request_body['body_html']
@@ -91,6 +120,7 @@ module Routes
       product.images = request_body['images'] if request_body['images']
 
       if product.save!
+        response_data['product'] = extract_product_data(product)
         if request_body['variants'] && request_body['variants'].is_a?(Array)
           request_body['variants'].each_with_index do |variant_data, index|
             variant = ShopifyAPI::Variant.new(session: session)
@@ -103,9 +133,10 @@ module Routes
           end
         end
 
+        response_data['variants'] << extract_variant_data(variant)
         content_type :json
         status 201
-        { status: 'success', message: 'Product created successfully',product: product.id }.to_json
+        { status: 'success', message: 'Product created successfully',product: response_data }.to_json
       else
         status 500
         { status: 'error', message: 'Failed to create product', errors: product.errors.full_messages }.to_json
@@ -148,7 +179,6 @@ products.each do |product|
 end
 
 products_data.to_json
-      # Transforme os produtos em um formato JSON e retorne como resposta
     end
   end
 end
