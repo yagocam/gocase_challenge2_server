@@ -130,7 +130,6 @@ module Routes
         session: session
       )
 
-
       products_data = []
 
       products.each do |product|
@@ -140,9 +139,17 @@ module Routes
           body_html: product.body_html,
           createdAt: product.created_at,
           status: product.status,
-          active: product.published_at, # Verifica se há uma data de publicação
-          variants: []
+          product_type: product.product_type,
+
+          variants: [],
+          images: []  # Inicialize images como um array vazio
         }
+
+        product.images.each do |image|
+          product_data[:images] << {
+            src: image.src
+          }
+        end
 
         product.variants.each do |variant|
           product_data[:variants] << {

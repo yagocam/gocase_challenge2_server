@@ -1,9 +1,7 @@
 require 'sinatra'
-require_relative '../helpers/shopify_api_helper'
 
 module Routes
   class Customer < Sinatra::Base
-    include ShopifyAPIHelper
     register Sinatra::Cors
 
     set :allow_origin, '*'
