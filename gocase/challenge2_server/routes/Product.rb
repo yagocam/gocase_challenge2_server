@@ -80,7 +80,18 @@ module Routes
         { status: 'error', message: 'Product not found' }.to_json
       end
     end
+    delete '/remove_product' do
+      request_body = JSON.parse(request.body.read)
 
+      ShopifyAPI::Product.delete(
+      session: session,
+      id: request_body['id'],
+      )
+      content_type :json
+      status 200
+      { status: 'success', message: 'Product removed  successfully' }.to_json
+
+    end
     post '/create_product' do
       request_body = JSON.parse(request.body.read)
       response_data = {}

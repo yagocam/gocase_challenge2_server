@@ -1,32 +1,42 @@
 require 'sinatra'
-require_relative '../helpers/shopify_api_helper'
+require 'shopify_api'
+require 'sinatra/cors'
+require_relative 'utils/utils_order'
 
 module Routes
   class Order < Sinatra::Base
-    include ShopifyAPIHelper
     register Sinatra::Cors
 
+    session = ShopifyAPI::Auth::Session.new(
+      shop: 'businesscasegocasedev.myshopify.com',
+      access_token: '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'
+    )
     set :allow_origin, '*'
-    set :allow_methods, 'GET,HEAD,POST,UPDATE,DELETE'
+    set :allow_methods, 'GET,HEAD,POST,UPDATE,'
     set :allow_headers, 'content-type,if-modified-since'
     set :expose_headers, 'location,link'
 
-
-
-    get '/order' do
-      id = params[:id]
-      query = <<~QUERY
-        query {
-          node(id: "gid://shopify/Order/148977776") {
-            id
-            ... on Order {
-              name
-            }
-          }
-        }
-      QUERY
+    before do
+      headers 'Access-Control-Allow-Origin' => '*',
+              'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
+              'Access-Control-Allow-Headers' => 'Origin, Accept, Content-Type, X-Requested-With, X-CSRF-Token'
     end
+
+
+
     get '/orders' do
+      request_body = JSON.parse(request.body.read)
+      orders = ShopifyAPI::Order.all(
+      session: session,
+      status: request_body['status'],
+    )
+    response_data = {}
+    response_data['orders'] = extract_order_data(orders)
+    content_type :json
+    status 200
+    { status: 'success', message: 'Orders retrieve sucessfully', orders: response_data }.to_json
+    end
+    get '/order' do
       limit = params[:limit] || 10
       query = <<~QUERY
         query {

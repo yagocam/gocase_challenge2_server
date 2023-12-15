@@ -32,6 +32,13 @@ module Routes
       status 200
       { status: 'success', message: 'Collection query sucessfully', collections: response_data }.to_json
     end
+    delete '/collection' do
+      request_body = JSON.parse(request.body.read)
+      ShopifyAPI::CustomCollection.delete(
+        session: session,
+        id: request_body['id'],
+      )
+    end
     post '/collection' do
       request_body = JSON.parse(request.body.read)
       collection = ShopifyAPI::CustomCollection.new(session: session)
