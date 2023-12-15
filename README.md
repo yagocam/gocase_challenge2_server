@@ -1,6 +1,7 @@
 Aplicativo feito em ruby onde consulta diretamente a api do shopify
 Crud completo para produtos, collects,coleções,pedidos e cliente.(Funções do passo 1 de gerencimaneto de pedidos e faturamento)
 Todas as requisições retornam json totalmente tratado. 
+O motivo de usar ruby foi para ja praticar meus conhecimentos de empregos anteriores e manter o padrão da empresa, a ideixa do front seria em remix com o mesmo pensamento.
 Infelizmente, não foi possivel concluir o front a tempo e fazer deploy do servidor. 
 
 Instruções para instalação
