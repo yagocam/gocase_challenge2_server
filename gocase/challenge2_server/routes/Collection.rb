@@ -39,6 +39,16 @@ module Routes
         id: request_body['id'],
       )
     end
+    delete '/collection/:id' do
+      id = params['id'].to_i
+      ShopifyAPI::CustomCollection.delete(
+        session: session,
+        id: id,
+      )
+      content_type :json
+      status 200
+      { status: 'success', message: 'Collection removed  successfully' }.to_json
+    end
     post '/collection' do
       request_body = JSON.parse(request.body.read)
       collection = ShopifyAPI::CustomCollection.new(session: session)

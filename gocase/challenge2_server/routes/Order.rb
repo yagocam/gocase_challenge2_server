@@ -23,7 +23,16 @@ module Routes
     end
 
 
-
+    delete '/order/:id' do
+      id = params['id'].to_i
+      order = ShopifyAPI::Order.delete(
+        session: session,
+        id: id,
+      )
+      content_type :json
+      status 200
+      { status: 'success', message: 'Order removed  successfully' }.to_json
+    end
     get '/orders' do
       request_body = JSON.parse(request.body.read)
       orders = ShopifyAPI::Order.all(
@@ -36,105 +45,67 @@ module Routes
     status 200
     { status: 'success', message: 'Orders retrieve sucessfully', orders: response_data }.to_json
     end
-    get '/order' do
-      limit = params[:limit] || 10
-      query = <<~QUERY
-        query {
-          orders(first: 10) {
-            edges {
-              node {
-                id
-                displayFinancialStatus
-                name
-              }
-            }
-          }
-        }
-      QUERY
+    get '/order/:id' do
+      id = params['id'].to_i
 
-      shopify_response = make_shopify_request(query)
+      order = ShopifyAPI::Order.find(
+        session: session,
+        id: id
+      )
+      response_data = {}
+      response_data['order'] = extract_order_data(order)
       content_type :json
-      shopify_response.to_json
-    end
-
-    delete '/order' do
-      id = params[:id]
-      query = <<~QUERY
-        mutation draftOrderDelete($input: DraftOrderDeleteInput!) {
-          draftOrderDelete(input: $input) {
-            deletedId
-          }
-        }
-      QUERY
-      variables = {
-        "input": {
-          "id": id
-        }
-      }
-      shopify_response = make_shopify_request(query, variables)
-      content_type :json
-      shopify_response.to_json
+      status 200
+      { status: 'success', message: 'Order retrieve sucessfully', order: response_data }.to_json
     end
 
     put '/order' do
       request_body = JSON.parse(request.body.read)
-      namespace = request_body['namespace']
-      key = request_body['key']
-      type = request_body['type']
-      price = request_body['price']
-      value_metafield = request_body['value_metafield']
-      type_metafield = request_body['type_metafield']
-      id_metafield = request_body['id_metafield']
-      id_order = request_body['id_order']
-      firstName = request_body['firstName']
-      lastName = request_body['lastName']
-      city = request_body['city']
-      address1 = request_body['address1']
-
-      metafields = [
-        { 'namespace' => namespace, 'key' => key, 'type' => 'single_line_text_field', 'value' => value_metafield },
-        { 'id' => id_metafield, 'value' => price }
-      ].reject { |metafield| metafield.values.any? { |v| v.nil? || v.strip.empty? } }
-      shippingAddress = [{ 'firstName' => firstName, 'lastName' => lastName, 'city' => city,
-                           'address1' => address1 }].reject do |shippingAddress|
-        shippingAddress.values.any? do |v|
-          v.nil? || v.strip.empty?
-        end
-      end
-
-      query = <<~QUERY
-        mutation updateOrderMetafields($input: OrderInput!) {
-          orderUpdate(input: $input) {
-            order {
-              id
-              metafields(first: 3) {
-                edges {
-                  node {
-                    id
-                    namespace
-                    key
-                    value
-                  }
-                }
-              }
-            }
-            userErrors {
-              message
-              field
-            }
-          }
-        }
-      QUERY
-      variables = {
-        'input' => {
-          'metafields' => metafields,
-          'shippingAddress' => shippingAddress,
-          'id' => id_order
-        }
-      }
-      shopify_response = make_shopify_request(query, variables)
+      order = ShopifyAPI::Order.new(session: session)
+      order.id =  request_body['id']
+      order.email = request_body['email']
+      order.save!
+      response_data = {}
+      response_data['order'] = extract_order_data(order)
       content_type :json
-      shopify_response.to_json
+      status 200
+      { status: 'success', message: 'Order updated sucessfully', order: response_data }.to_json
+    end
+
+    post '/order' do
+
+order = ShopifyAPI::Order.new(session: session)
+order.line_items = [
+  {
+    "title" => "Big Brown Bear Boots",
+    "price" => 74.99,
+    "grams" => "1300",
+    "quantity" => 3,
+    "tax_lines" => [
+      {
+        "price" => 13.5,
+        "rate" => 0.06,
+        "title" => "State tax"
+      }
+    ]
+  }
+]
+order.transactions = [
+  {
+    "kind" => "sale",
+    "status" => "success",
+    "amount" => 238.47
+  }
+]
+order.total_tax = 13.5
+order.currency = "EUR"
+order.save!
+
+
+content_type :json
+status 200
+{ status: 'success', message: 'Order paid sucessfully' }.to_json
+
     end
   end
 end
